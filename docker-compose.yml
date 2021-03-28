@@ -16,6 +16,7 @@ services:
 
   back:
     build: ./back
+    command: python manage.py runserver 0.0.0.0:8000
     image: back-image
     container_name: back
     env_file: .env
@@ -25,7 +26,7 @@ services:
       - db
       - redis
     volumes:
-      - ./back:/home/app/back
+      - ./back:/home/app
 
   front:
     build: ./front

@@ -1,11 +1,20 @@
-#!/bin/sh
+#!/bin/bash
 
-until PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -U $POSTGRES_USER -c '\q'; do
-  echo "Waiting for postgres server"
-  sleep 1
+echo "Flush the manage.py command it any"
+
+while ! python manage.py flush --no-input 2>&1; do
+  echo "Flusing django manage command"
+  sleep 3
 done
 
-echo "WITH RELOAD"
-gunicorn back.asgi:application -k uvicorn.workers.UvicornWorker --log-file=- --log-level=info --bind 0.0.0.0:8000 --reload
+echo "Migrate the Database at startup of project"
+
+# Wait for few minute and run db migraiton
+while ! python manage.py migrate  2>&1; do
+   echo "Migration is in progress status"
+   sleep 3
+done
+
+echo "Django docker is fully configured successfully."
 
 exec "$@"

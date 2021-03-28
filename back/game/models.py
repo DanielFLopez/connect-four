@@ -17,6 +17,17 @@ class Game(models.Model):
     player2 = models.CharField(max_length=20, null=True)
     winner = models.CharField(max_length=20, null=True)
     status = models.IntegerField(choices=Status.choices, default=1)
+    moves = models.IntegerField(default=0)
+    size = models.IntegerField(default=7)
+
+    def check_tied_game(self):
+        self.moves += 1
+        is_tied = (self.size * self.size) == self.moves and not self.winner
+        print(self.moves, "<---- MOVES")
+        if is_tied:
+            self.winner = "TIED GAME"
+        self.save()
+        return is_tied
 
     def change_turn(self):
         if self.turn == 1:
@@ -26,6 +37,7 @@ class Game(models.Model):
         self.save()
 
     def set_winner(self, user):
+        self.moves += 1
         self.status = 2
         self.winner = user
         self.save()
