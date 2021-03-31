@@ -1,3 +1,5 @@
+import random
+
 from game.models import Game
 
 MIN_VALUE, MAX_VALUE = 0, 6
@@ -12,12 +14,37 @@ def process_game(column=None, row=None, user=None, game=None):
         matrix = game.matrix
         matrix[row][column] = game.get_user_code(user)
         game.set_matrix(matrix)
+        game.pop_move(f"{row},{column}")
         if validate_win(column, row, matrix):
             game.set_winner(user)
             return {'is_winner': True, 'message': f"{user} WINS!!!", 'matrix_value': matrix}
         elif game.check_tied_game():
             return {'is_winner': True, 'message': "TIED GAME :/", 'matrix_value': matrix}
-        game.change_turn()
+
+        if game.type_game == Game.Type.PVE:
+            return make_move_ia(game)
+        else:
+            game.change_turn()
+    return {'turn': game.get_user_by_turn(), 'matrix_value': game.matrix, 'is_winner': False}
+
+
+def make_move_ia(game):
+    posible_moves = game.posible_moves
+    move = random.choice([m for m in posible_moves if validate_move(row=int(m.split(",")[0]), column=int(m.split(",")[1]), game=game)['is_valid']])
+    game.pop_move(move)
+
+    row = int(move.split(",")[0])
+    column = int(move.split(",")[1])
+
+    matrix = game.matrix
+    matrix[row][column] = game.get_user_code("IA")
+    game.set_matrix(matrix)
+
+    if validate_win(column, row, matrix=matrix):
+        game.set_winner("IA")
+        return {'is_winner': True, 'message': " IA WINS!!!", 'matrix_value': matrix}
+    elif game.check_tied_game():
+        return {'is_winner': True, 'message': "TIED GAME :/", 'matrix_value': matrix}
     return {'turn': game.get_user_by_turn(), 'matrix_value': game.matrix, 'is_winner': False}
 
 
