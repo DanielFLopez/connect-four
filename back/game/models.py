@@ -11,19 +11,24 @@ class Game(models.Model):
         PLAYING = 1, "Playing"
         FINALIZED = 2, "Finalized"
 
+    class Type(models.IntegerChoices):
+        PVP = 1, "PVP"
+        PVE = 2, "PVE"
+
     matrix = models.JSONField(default=list)
     turn = models.IntegerField(choices=TurnChoice.choices, default=1)
     player1 = models.CharField(max_length=20, null=True)
     player2 = models.CharField(max_length=20, null=True)
     winner = models.CharField(max_length=20, null=True)
-    status = models.IntegerField(choices=Status.choices, default=1)
+    status = models.IntegerField(choices=Status.choices, default=0)
     moves = models.IntegerField(default=0)
     size = models.IntegerField(default=7)
+    type_game = models.IntegerField(choices=Type.choices, default=1)
+    posible_moves = models.JSONField(default=list)
 
     def check_tied_game(self):
         self.moves += 1
         is_tied = (self.size * self.size) == self.moves and not self.winner
-        print(self.moves, "<---- MOVES")
         if is_tied:
             self.winner = "TIED GAME"
         self.save()
@@ -69,6 +74,22 @@ class Game(models.Model):
     def initilize_matrix(self):
         self.matrix = [[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0],
                        [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]]
+        self.save()
+
+    def generate_posible_moves(self):
+        moves = []
+        for row in range(self.size):
+            for column in range(self.size):
+                moves.append(f"{row},{column}")
+        self.posible_moves = moves
+        self.save()
+
+    def pop_move(self, value):
+        moves = self.posible_moves
+        index = moves.index(value)
+        moves.pop(index)
+        self.posible_moves = moves
+        self.save()
 
     def get_user_by_turn(self):
         if self.turn == 1:
@@ -80,4 +101,8 @@ class Game(models.Model):
             self.winner = self.player1
         else:
             self.winner = self.player2
+        self.save()
+
+    def set_type_game(self, type):
+        self.type_game = type
         self.save()

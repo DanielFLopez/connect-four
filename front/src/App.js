@@ -54,6 +54,7 @@ function App() {
     const [turn, setTurn] = useState('')
     const [winner, setWinner] = useState('')
     const [status, setStatus] = useState(false)
+    const [type, setType] = useState(0)
     const classes = useStyles();
 
 
@@ -99,7 +100,7 @@ function App() {
             if (e.target.dataset.status === "0") {
                 let row = e.target.dataset.row
                 let column = e.target.dataset.column
-                let data = {'column': column, 'row': row, 'status': e.target.dataset.status, 'user': name, 'game': game, 'type_message': 'message'}
+                let data = {'column': column, 'row': row, 'status': e.target.dataset.status, 'user': name, 'game': game, 'type_message': 'message', 'type_game': type}
                 webSocket.current.send(JSON.stringify(data))
             }
         }else{
@@ -121,10 +122,11 @@ function App() {
         setText(e.target.value);
     }
 
-    const handleSubmit = (e) => {
+    const handlePvp = (e) => {
         e.preventDefault();
         axios.post('http://localhost:8000/game/register/', {
-            user: text
+            user: text,
+            type_game: 1
         })
         .then(function (response) {
             console.log("register")
@@ -137,6 +139,26 @@ function App() {
             console.log(error);
         });
     }
+
+    const handlePve = (e) => {
+        e.preventDefault();
+        axios.post('http://localhost:8000/game/register/', {
+            user: text,
+            type_game: 2
+        })
+        .then(function (response) {
+            console.log("register")
+            console.log(response.data)
+            setName(text);
+            setGame(response.data.game_id)
+            setType(response.data.type_game)
+            webSocket.current.send(JSON.stringify({'game': response.data.game_id, 'type_message': 'initial'}))
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+    }
+
 
     const handleClose = (e) => {
         e.preventDefault();
@@ -164,9 +186,10 @@ function App() {
                     </Typography>
                     <Button color="inherit" onClick={handleClose}>Close game</Button>
                 </Toolbar>
-            </AppBar>) : (<form onSubmit={handleSubmit}>
+            </AppBar>) : (<form onSubmit={handlePvp}>
                 <TextField required id="standard-required" label="Type your name" onChange={handleChange} value={text}/>
-                <Button onClick={handleSubmit}>Send</Button>
+                <Button onClick={handlePvp}>PVP</Button>
+                <Button onClick={handlePve}>PVE</Button>
             </form>)
             }
             {name ? (<div className={classes.body}>

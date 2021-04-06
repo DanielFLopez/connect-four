@@ -5,7 +5,7 @@ import json
 from channels.generic.websocket import WebsocketConsumer
 
 from game.models import Game
-from game.utils import process_game
+from game.controller import process_game
 
 
 class GameConsumer(WebsocketConsumer):
@@ -67,7 +67,10 @@ class GameConsumer(WebsocketConsumer):
     def game_turn(self, event):
         data = event['data']
         game = Game.objects.get(pk=data['game'])
-        ready = game.is_full()
+        if game.type_game == Game.Type.PVE:
+            ready = True
+        else:
+            ready = game.is_full()
         self.send(text_data=json.dumps({'type_message': 'initial', 'turn': game.get_user_by_turn(), 'status': ready}))
 
     def set_winner(self, event):
